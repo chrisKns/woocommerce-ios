@@ -844,11 +844,9 @@ private extension OrderDetailsViewController {
         ServiceLocator.stores.dispatch(done)
         ServiceLocator.analytics.track(event: WooAnalyticsEvent.Orders.orderStatusChange(flow: .editing, orderID: orderID, from: undoStatus, to: newStatus))
 
-        notices.orderUpdateNotice = displayOrderStatusUpdatedNotice { [weak self] in
-            guard let self = self else { return }
+        displayOrderStatusUpdatedNotice {
             ServiceLocator.stores.dispatch(undo)
             ServiceLocator.analytics.track(event: WooAnalyticsEvent.Orders.orderStatusChange(flow: .editing, orderID: orderID, from: newStatus, to: undoStatus))
-            self.notices.orderUpdateNotice = nil
         }
     }
 
@@ -872,13 +870,12 @@ private extension OrderDetailsViewController {
 
     /// Enqueues the `Order Updated` Notice. Whenever the `Undo` button gets pressed, we'll execute the `onUndoAction` closure.
     ///
-    private func displayOrderStatusUpdatedNotice(onUndoAction: @escaping () -> Void) -> Notice {
+    private func displayOrderStatusUpdatedNotice(onUndoAction: @escaping () -> Void) {
         let message = NSLocalizedString("Order status updated", comment: "Order status update success notice")
         let actionTitle = NSLocalizedString("Undo", comment: "Undo Action")
         let notice = Notice(title: message, feedbackType: .success, actionTitle: actionTitle, actionHandler: onUndoAction)
 
         ServiceLocator.noticePresenter.enqueue(notice: notice)
-        return notice
     }
 
     /// Enqueues the `Unable to Change Status of Order` Notice.
@@ -892,12 +889,8 @@ private extension OrderDetailsViewController {
         )
         let title = String.localizedStringWithFormat(titleFormat, orderID)
         let actionTitle = NSLocalizedString("Retry", comment: "Retry Action")
-        let notice = Notice(title: title, message: nil, feedbackType: .error, actionTitle: actionTitle) { [weak self] in
+        let notice = Notice(title: title, message: nil, feedbackType: .error, actionTitle: actionTitle, priority: .immediate) { [weak self] in
             self?.setOrderStatus(to: status)
-        }
-
-        if let orderUpdateNotice = notices.orderUpdateNotice {
-            ServiceLocator.noticePresenter.cancel(notice: orderUpdateNotice)
         }
 
         ServiceLocator.noticePresenter.enqueue(notice: notice)

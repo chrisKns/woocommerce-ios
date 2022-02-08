@@ -7,6 +7,15 @@ import UIKit
 ///
 struct Notice {
 
+    enum Priority: Equatable {
+        // It will behave as the current implementation does
+        case `default`
+        // Will cancel the top presented and present immediately
+        // If the currently presented has priority immediate
+        // it will be placed after all the `default` priority Notices in the queue
+        case immediate
+    }
+
     /// The title that contains the reason for the notice
     ///
     let title: String
@@ -31,6 +40,8 @@ struct Notice {
     ///
     let actionTitle: String?
 
+    let priority: Notice.Priority
+
     /// An optional handler closure that will be called when the action button is tapped, if you've provided an action title
     ///
     let actionHandler: (() -> Void)?
@@ -44,6 +55,7 @@ struct Notice {
          feedbackType: UINotificationFeedbackGenerator.FeedbackType? = nil,
          notificationInfo: NoticeNotificationInfo? = nil,
          actionTitle: String? = nil,
+         priority: Notice.Priority = .default,
          actionHandler: ((() -> Void))? = nil) {
         self.title = title
         self.subtitle = subtitle
@@ -51,6 +63,7 @@ struct Notice {
         self.feedbackType = feedbackType
         self.notificationInfo = notificationInfo
         self.actionTitle = actionTitle
+        self.priority = priority
         self.actionHandler = actionHandler
     }
 }
@@ -62,6 +75,7 @@ extension Notice: Equatable {
             lhs.message == rhs.message &&
             lhs.feedbackType == rhs.feedbackType &&
             lhs.notificationInfo?.identifier == rhs.notificationInfo?.identifier &&
-            lhs.actionTitle == rhs.actionTitle
+            lhs.actionTitle == rhs.actionTitle &&
+            lhs.priority == rhs.priority
     }
 }

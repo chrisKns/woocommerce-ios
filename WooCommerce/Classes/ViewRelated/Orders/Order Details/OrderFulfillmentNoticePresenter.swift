@@ -16,7 +16,6 @@ final class OrderFulfillmentNoticePresenter {
     private let analytics: Analytics = ServiceLocator.analytics
 
     private var cancellables = Set<AnyCancellable>()
-    private var optimisticFulfillmentNotice: Notice?
 
     /// Start presenting notices for the given fulfillment process.
     ///
@@ -51,28 +50,21 @@ final class OrderFulfillmentNoticePresenter {
     private func displayOptimisticFulfillmentNotice(_ fulfillmentProcess: OrderFulfillmentUseCase.FulfillmentProcess) {
         let message = NSLocalizedString("🎉 Order Completed", comment: "Success notice when tapping Mark Order Complete on Review Order screen")
         let actionTitle = NSLocalizedString("Undo", comment: "Undo Action")
-        let notice = Notice(title: message, feedbackType: .success, actionTitle: actionTitle) { [weak self] in
-            guard let self = self else { return }
+        let notice = Notice(title: message, feedbackType: .success, actionTitle: actionTitle) {
             self.analytics.track(.orderMarkedCompleteUndoButtonTapped)
 
             self.observe(fulfillmentProcess: fulfillmentProcess.undo())
-            self.optimisticFulfillmentNotice = nil
         }
 
         noticePresenter.enqueue(notice: notice)
-        optimisticFulfillmentNotice = notice
     }
 
     private func displayFulfillmentErrorNotice(error: OrderFulfillmentUseCase.FulfillmentError) {
         let actionTitle = NSLocalizedString("Retry", comment: "Retry Action")
-        let notice = Notice(title: error.message, message: nil, feedbackType: .error, actionTitle: actionTitle) {
+        let notice = Notice(title: error.message, message: nil, feedbackType: .error, actionTitle: actionTitle, priority: .immediate) {
             self.observe(fulfillmentProcess: error.retry())
         }
 
-        // Cancel the optimistic fulfillment notice (if any) in order to display immediately the most relevant error message
-        if let optimisticFulfillmentNotice = optimisticFulfillmentNotice {
-            noticePresenter.cancel(notice: optimisticFulfillmentNotice)
-        }
         noticePresenter.enqueue(notice: notice)
     }
 }

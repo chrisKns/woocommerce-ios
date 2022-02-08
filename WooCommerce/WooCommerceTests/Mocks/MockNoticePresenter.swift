@@ -15,7 +15,4 @@ final class MockNoticePresenter: NoticePresenter {
         queuedNotices.append(notice)
     }
 
-    func cancel(notice: Notice) {
-        queuedNotices.removeAll(where: {$0 == notice})
-    }
 }

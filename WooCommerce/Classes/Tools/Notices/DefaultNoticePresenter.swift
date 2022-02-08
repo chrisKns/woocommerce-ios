@@ -41,17 +41,26 @@ class DefaultNoticePresenter: NoticePresenter {
         else {
             return
         }
-        notices.append(notice)
+
+        if notice.priority == .immediate {
+            enqueueImmediatePriority(notice: notice)
+
+            // Dismiss the notice on screen if immediate priority notice is enqueued
+            if let noticeOnScreen = noticeOnScreen, noticeOnScreen.priority != .immediate {
+                self.dismissNoticeOnScreen?()
+            }
+        } else {
+            notices.append(notice)
+        }
+
         presentNextNoticeIfPossible()
     }
 
-    /// It dismisses the provided `Notice` if it is currenly presented in the foreground, or removes it from the queue
+    /// Inserts a notice in the queue after the last notice with immediate priority
     ///
-    func cancel(notice: Notice) {
-        notices.removeAll(where: { $0 == notice })
-        if notice == noticeOnScreen {
-            dismissNoticeOnScreen?()
-        }
+    private func enqueueImmediatePriority(notice: Notice) {
+        let index = notices.firstIndex(where: { $0.priority != .immediate }) ?? notices.startIndex
+        notices.insert(notice, at: index)
     }
 }
 
